@@ -95,6 +95,11 @@ where
     T: Eq + Hash,
     S: BuildHasher,
 {
+    /// Reserves capacity for at least additional more elements to be inserted in the `FlatMultset`.
+    pub fn reserve(&mut self, additional: usize) {
+        self.map.reserve(additional);
+    }
+
     /// Adds a value to the set.
     pub fn insert(&mut self, value: T) {
         self.map.insert(value, ());
@@ -130,6 +135,38 @@ where
         Q: ?Sized + Hash + Eq,
     {
         self.map.contains_key(value)
+    }
+}
+
+impl<T, S> FromIterator<T> for FlatMultiset<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut set = Self::with_hasher(Default::default());
+        set.extend(iter);
+        set
+    }
+}
+
+impl<T, S> Extend<T> for FlatMultiset<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        self.map.extend(iter.into_iter().map(|k| (k, ())));
+    }
+}
+
+impl<'a, T, S> Extend<&'a T> for FlatMultiset<T, S>
+where
+    T: 'a + Eq + Hash + Copy,
+    S: BuildHasher,
+{
+    fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+        self.extend(iter.into_iter().copied());
     }
 }
 

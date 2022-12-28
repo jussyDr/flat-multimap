@@ -158,12 +158,18 @@ where
     K: Eq + Hash,
     S: BuildHasher,
 {
+    /// Reserves capacity for at least additional more elements to be inserted in the `FlatMultimap`.
+    pub fn reserve(&mut self, additional: usize) {
+        self.table
+            .reserve(additional, make_hasher(&self.hash_builder));
+    }
+
     /// Inserts a key-value pair into the map.
     pub fn insert(&mut self, key: K, value: V) {
         let hash = make_hash(&self.hash_builder, &key);
 
         self.table
-            .insert(hash, (key, value), |x| make_hash(&self.hash_builder, &x.0));
+            .insert(hash, (key, value), make_hasher(&self.hash_builder));
     }
 
     /// Removes an arbitrary value with the given key from the map, returning the removed value if there was a value at the key.
@@ -202,6 +208,57 @@ where
         let hash = make_hash(&self.hash_builder, key);
 
         self.table.find(hash, equivalent_key(key)).is_some()
+    }
+}
+
+impl<K, V, S> FromIterator<(K, V)> for FlatMultimap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        let iter = iter.into_iter();
+        let mut map = Self::with_capacity_and_hasher(iter.size_hint().0, S::default());
+        iter.for_each(|(k, v)| {
+            map.insert(k, v);
+        });
+        map
+    }
+}
+
+impl<K, V, S> Extend<(K, V)> for FlatMultimap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher,
+{
+    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
+        let iter = iter.into_iter();
+        self.reserve(iter.size_hint().0);
+        iter.for_each(move |(k, v)| {
+            self.insert(k, v);
+        });
+    }
+}
+
+impl<'a, K, V, S> Extend<(&'a K, &'a V)> for FlatMultimap<K, V, S>
+where
+    K: Eq + Hash + Copy,
+    V: Copy,
+    S: BuildHasher,
+{
+    fn extend<T: IntoIterator<Item = (&'a K, &'a V)>>(&mut self, iter: T) {
+        self.extend(iter.into_iter().map(|(&key, &value)| (key, value)));
+    }
+}
+
+impl<'a, K, V, S> Extend<&'a (K, V)> for FlatMultimap<K, V, S>
+where
+    K: Eq + Hash + Copy,
+    V: Copy,
+    S: BuildHasher,
+{
+    fn extend<T: IntoIterator<Item = &'a (K, V)>>(&mut self, iter: T) {
+        self.extend(iter.into_iter().map(|&(key, value)| (key, value)));
     }
 }
 
@@ -577,4 +634,12 @@ where
     let mut state = hash_builder.build_hasher();
     value.hash(&mut state);
     state.finish()
+}
+
+fn make_hasher<K, V, S>(hash_builder: &S) -> impl Fn(&(K, V)) -> u64 + '_
+where
+    K: Hash,
+    S: BuildHasher,
+{
+    move |val| make_hash(hash_builder, &val.0)
 }
