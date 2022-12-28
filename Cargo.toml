@@ -1,0 +1,14 @@
+[package]
+name = "flat-multimap"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.61"
+description = "A multimap and multiset implementation using a flattened hash table"
+repository = "https://github.com/jussyDr/flat-multimap"
+license = "MIT OR Apache-2.0"
+keywords = ["hashmap"]
+categories = ["data-structures"]
+
+[dependencies]
+hashbrown = { version = "0.13", features = ["raw"] }
+serde = { version = "1.0", default-features = false, optional = true }
