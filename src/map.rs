@@ -1,4 +1,4 @@
-use hashbrown::raw::{RawIter, RawTable};
+use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
@@ -90,6 +90,17 @@ impl<K, V, S> FlatMultimap<K, V, S> {
         }
     }
 
+    /// An iterator visiting all key-value pairs in arbitrary order, with mutable references to the values.
+    /// The iterator element type is (&'a K, &'a mut V).
+    pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
+        unsafe {
+            IterMut {
+                iter: self.table.iter(),
+                phantom: PhantomData,
+            }
+        }
+    }
+
     /// An iterator visiting all keys in arbitrary order. The iterator element type is `&'a K`.
     ///
     /// # Examples
@@ -109,6 +120,34 @@ impl<K, V, S> FlatMultimap<K, V, S> {
     /// ```
     pub fn keys(&self) -> Keys<'_, K, V> {
         Keys { iter: self.iter() }
+    }
+
+    /// Creates a consuming iterator visiting all the keys in arbitrary order.
+    /// The map cannot be used after calling this. The iterator element type is `K`.
+    pub fn into_keys(self) -> IntoKeys<K, V> {
+        IntoKeys {
+            iter: self.into_iter(),
+        }
+    }
+
+    /// An iterator visiting all values in arbitrary order. The iterator element type is `&'a V`.
+    pub fn values(&self) -> Values<'_, K, V> {
+        Values { iter: self.iter() }
+    }
+
+    /// An iterator visiting all values mutably in arbitrary order. The iterator element type is `&'a mut V`.
+    pub fn values_mut(&mut self) -> ValuesMut<'_, K, V> {
+        ValuesMut {
+            iter: self.iter_mut(),
+        }
+    }
+
+    /// Creates a consuming iterator visiting all the values in arbitrary order.
+    /// The map cannot be used after calling this. The iterator element type is `V`.
+    pub fn into_values(self) -> IntoValues<K, V> {
+        IntoValues {
+            iter: self.into_iter(),
+        }
     }
 }
 
@@ -173,6 +212,26 @@ impl<'a, K, V, S> IntoIterator for &'a FlatMultimap<K, V, S> {
     }
 }
 
+impl<'a, K, V, S> IntoIterator for &'a mut FlatMultimap<K, V, S> {
+    type Item = (&'a K, &'a mut V);
+    type IntoIter = IterMut<'a, K, V>;
+
+    fn into_iter(self) -> IterMut<'a, K, V> {
+        self.iter_mut()
+    }
+}
+
+impl<K, V, S> IntoIterator for FlatMultimap<K, V, S> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(self) -> IntoIter<K, V> {
+        IntoIter {
+            iter: self.table.into_iter(),
+        }
+    }
+}
+
 /// An iterator over the entries of a `FlatMultimap`.
 pub struct Iter<'a, K, V> {
     iter: RawIter<(K, V)>,
@@ -190,6 +249,36 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     }
 }
 
+/// A mutable iterator over the entries of a `FlatMultimap`.
+pub struct IterMut<'a, K, V> {
+    iter: RawIter<(K, V)>,
+    phantom: PhantomData<(&'a K, &'a mut V)>,
+}
+
+impl<'a, K, V> Iterator for IterMut<'a, K, V> {
+    type Item = (&'a K, &'a mut V);
+
+    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
+        self.iter.next().map(|bucket| unsafe {
+            let bucket = bucket.as_mut();
+            (&bucket.0, &mut bucket.1)
+        })
+    }
+}
+
+/// An owning iterator over the entries of a `FlatMultimap`.
+pub struct IntoIter<K, V> {
+    iter: RawIntoIter<(K, V)>,
+}
+
+impl<K, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<(K, V)> {
+        self.iter.next()
+    }
+}
+
 /// An iterator over the keys of a `FlatMultimap`.
 pub struct Keys<'a, K, V> {
     iter: Iter<'a, K, V>,
@@ -200,6 +289,58 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
 
     fn next(&mut self) -> Option<&'a K> {
         self.iter.next().map(|(key, _)| key)
+    }
+}
+
+/// An owning iterator over the keys of a `FlatMultimap`.
+pub struct IntoKeys<K, V> {
+    iter: IntoIter<K, V>,
+}
+
+impl<K, V> Iterator for IntoKeys<K, V> {
+    type Item = K;
+
+    fn next(&mut self) -> Option<K> {
+        self.iter.next().map(|(key, _)| key)
+    }
+}
+
+/// An iterator over the values of a `FlatMultimap`.
+pub struct Values<'a, K, V> {
+    iter: Iter<'a, K, V>,
+}
+
+impl<'a, K, V> Iterator for Values<'a, K, V> {
+    type Item = &'a V;
+
+    fn next(&mut self) -> Option<&'a V> {
+        self.iter.next().map(|(_, value)| value)
+    }
+}
+
+/// A mutable iterator over the values of a `FlatMultimap`.
+pub struct ValuesMut<'a, K, V> {
+    iter: IterMut<'a, K, V>,
+}
+
+impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
+    type Item = &'a mut V;
+
+    fn next(&mut self) -> Option<&'a mut V> {
+        self.iter.next().map(|(_, value)| value)
+    }
+}
+
+/// An owning iterator over the values of a `FlatMultimap`.
+pub struct IntoValues<K, V> {
+    iter: IntoIter<K, V>,
+}
+
+impl<K, V> Iterator for IntoValues<K, V> {
+    type Item = V;
+
+    fn next(&mut self) -> Option<V> {
+        self.iter.next().map(|(_, value)| value)
     }
 }
 

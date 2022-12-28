@@ -1,4 +1,4 @@
-use crate::map::{FlatMultimap, Keys};
+use crate::map::{FlatMultimap, IntoKeys, Keys};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash};
@@ -140,6 +140,17 @@ impl<'a, T, S> IntoIterator for &'a FlatMultiset<T, S> {
     }
 }
 
+impl<T, S> IntoIterator for FlatMultiset<T, S> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> IntoIter<T> {
+        IntoIter {
+            iter: self.map.into_keys(),
+        }
+    }
+}
+
 /// An iterator over the items of a `FlatMultiset`.
 pub struct Iter<'a, T> {
     iter: Keys<'a, T, ()>,
@@ -149,6 +160,19 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<&'a T> {
+        self.iter.next()
+    }
+}
+
+/// An owning iterator over the items of a `FlatMultiset`.
+pub struct IntoIter<T> {
+    iter: IntoKeys<T, ()>,
+}
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
         self.iter.next()
     }
 }
