@@ -1,6 +1,7 @@
 use crate::map::{FlatMultimap, IntoKeys, Keys};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
+use std::fmt::{self, Debug};
 use std::hash::{BuildHasher, Hash};
 use std::iter::FusedIterator;
 
@@ -152,10 +153,26 @@ impl<T, S> IntoIterator for FlatMultiset<T, S> {
     }
 }
 
+impl<T, S> Debug for FlatMultiset<T, S>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_set().entries(self.iter()).finish()
+    }
+}
+
 /// An iterator over the items of a `FlatMultiset`.
-#[derive(Clone)]
 pub struct Iter<'a, T> {
     iter: Keys<'a, T, ()>,
+}
+
+impl<T> Clone for Iter<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+        }
+    }
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
@@ -170,13 +187,19 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for Iter<'a, T> {
+impl<T> ExactSizeIterator for Iter<'_, T> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, T> FusedIterator for Iter<'a, T> {}
+impl<T> FusedIterator for Iter<'_, T> {}
+
+impl<T: Debug> Debug for Iter<'_, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
+}
 
 /// An owning iterator over the items of a `FlatMultiset`.
 pub struct IntoIter<T> {
@@ -202,3 +225,9 @@ impl<T> ExactSizeIterator for IntoIter<T> {
 }
 
 impl<T> FusedIterator for IntoIter<T> {}
+
+impl<T: Debug> Debug for IntoIter<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter.iter()).finish()
+    }
+}

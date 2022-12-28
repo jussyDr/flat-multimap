@@ -1,6 +1,7 @@
 use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
+use std::fmt::{self, Debug};
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::iter::FusedIterator;
 use std::marker::PhantomData;
@@ -233,11 +234,29 @@ impl<K, V, S> IntoIterator for FlatMultimap<K, V, S> {
     }
 }
 
+impl<K, V, S> Debug for FlatMultimap<K, V, S>
+where
+    K: Debug,
+    V: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map().entries(self.iter()).finish()
+    }
+}
+
 /// An iterator over the entries of a `FlatMultimap`.
-#[derive(Clone)]
 pub struct Iter<'a, K, V> {
     iter: RawIter<(K, V)>,
     phantom: PhantomData<(&'a K, &'a V)>,
+}
+
+impl<K, V> Clone for Iter<'_, K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+            phantom: self.phantom,
+        }
+    }
 }
 
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
@@ -255,18 +274,33 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for Iter<'a, K, V> {
+impl<K, V> ExactSizeIterator for Iter<'_, K, V> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, K, V> FusedIterator for Iter<'a, K, V> {}
+impl<K, V> FusedIterator for Iter<'_, K, V> {}
+
+impl<K: Debug, V: Debug> Debug for Iter<'_, K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
+}
 
 /// A mutable iterator over the entries of a `FlatMultimap`.
 pub struct IterMut<'a, K, V> {
     iter: RawIter<(K, V)>,
     phantom: PhantomData<(&'a K, &'a mut V)>,
+}
+
+impl<'a, K, V> IterMut<'a, K, V> {
+    fn iter(&self) -> Iter<'a, K, V> {
+        Iter {
+            iter: self.iter.clone(),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<'a, K, V> Iterator for IterMut<'a, K, V> {
@@ -284,17 +318,36 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for IterMut<'a, K, V> {
+impl<K, V> ExactSizeIterator for IterMut<'_, K, V> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, K, V> FusedIterator for IterMut<'a, K, V> {}
+impl<K, V> FusedIterator for IterMut<'_, K, V> {}
+
+impl<K, V> Debug for IterMut<'_, K, V>
+where
+    K: Debug,
+    V: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
 
 /// An owning iterator over the entries of a `FlatMultimap`.
 pub struct IntoIter<K, V> {
     iter: RawIntoIter<(K, V)>,
+}
+
+impl<K, V> IntoIter<K, V> {
+    fn iter(&self) -> Iter<'_, K, V> {
+        Iter {
+            iter: self.iter.iter(),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<K, V> Iterator for IntoIter<K, V> {
@@ -317,10 +370,23 @@ impl<K, V> ExactSizeIterator for IntoIter<K, V> {
 
 impl<K, V> FusedIterator for IntoIter<K, V> {}
 
+impl<K: Debug, V: Debug> fmt::Debug for IntoIter<K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+
 /// An iterator over the keys of a `FlatMultimap`.
-#[derive(Clone)]
 pub struct Keys<'a, K, V> {
     iter: Iter<'a, K, V>,
+}
+
+impl<K, V> Clone for Keys<'_, K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+        }
+    }
 }
 
 impl<'a, K, V> Iterator for Keys<'a, K, V> {
@@ -335,17 +401,31 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for Keys<'a, K, V> {
+impl<K, V> ExactSizeIterator for Keys<'_, K, V> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, K, V> FusedIterator for Keys<'a, K, V> {}
+impl<K, V> FusedIterator for Keys<'_, K, V> {}
+
+impl<K: Debug, V> Debug for Keys<'_, K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
+}
 
 /// An owning iterator over the keys of a `FlatMultimap`.
 pub struct IntoKeys<K, V> {
     iter: IntoIter<K, V>,
+}
+
+impl<K, V> IntoKeys<K, V> {
+    pub(crate) fn iter(&self) -> Keys<'_, K, V> {
+        Keys {
+            iter: self.iter.iter(),
+        }
+    }
 }
 
 impl<K, V> Iterator for IntoKeys<K, V> {
@@ -368,10 +448,25 @@ impl<K, V> ExactSizeIterator for IntoKeys<K, V> {
 
 impl<K, V> FusedIterator for IntoKeys<K, V> {}
 
+impl<K: Debug, V: Debug> Debug for IntoKeys<K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.iter.iter().map(|(k, _)| k))
+            .finish()
+    }
+}
+
 /// An iterator over the values of a `FlatMultimap`.
-#[derive(Clone)]
 pub struct Values<'a, K, V> {
     iter: Iter<'a, K, V>,
+}
+
+impl<K, V> Clone for Values<'_, K, V> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+        }
+    }
 }
 
 impl<'a, K, V> Iterator for Values<'a, K, V> {
@@ -386,13 +481,19 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for Values<'a, K, V> {
+impl<K, V> ExactSizeIterator for Values<'_, K, V> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, K, V> FusedIterator for Values<'a, K, V> {}
+impl<K, V> FusedIterator for Values<'_, K, V> {}
+
+impl<K, V: Debug> Debug for Values<'_, K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
+}
 
 /// A mutable iterator over the values of a `FlatMultimap`.
 pub struct ValuesMut<'a, K, V> {
@@ -411,13 +512,21 @@ impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for ValuesMut<'a, K, V> {
+impl<K, V> ExactSizeIterator for ValuesMut<'_, K, V> {
     fn len(&self) -> usize {
         self.iter.len()
     }
 }
 
-impl<'a, K, V> FusedIterator for ValuesMut<'a, K, V> {}
+impl<K, V> FusedIterator for ValuesMut<'_, K, V> {}
+
+impl<K, V: Debug> fmt::Debug for ValuesMut<'_, K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.iter.iter().map(|(_, val)| val))
+            .finish()
+    }
+}
 
 /// An owning iterator over the values of a `FlatMultimap`.
 pub struct IntoValues<K, V> {
@@ -443,6 +552,14 @@ impl<K, V> ExactSizeIterator for IntoValues<K, V> {
 }
 
 impl<K, V> FusedIterator for IntoValues<K, V> {}
+
+impl<K, V: Debug> Debug for IntoValues<K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.iter.iter().map(|(_, v)| v))
+            .finish()
+    }
+}
 
 fn equivalent_key<Q, K, V>(k: &Q) -> impl Fn(&(K, V)) -> bool + '_
 where
