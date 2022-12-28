@@ -19,7 +19,7 @@ use std::marker::PhantomData;
 ///
 /// assert_eq!(map.len(), 3);
 /// ```
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FlatMultimap<K, V, S = RandomState> {
     hash_builder: S,
     table: RawTable<(K, V)>,
@@ -234,6 +234,7 @@ impl<K, V, S> IntoIterator for FlatMultimap<K, V, S> {
 }
 
 /// An iterator over the entries of a `FlatMultimap`.
+#[derive(Clone)]
 pub struct Iter<'a, K, V> {
     iter: RawIter<(K, V)>,
     phantom: PhantomData<(&'a K, &'a V)>,
@@ -317,6 +318,7 @@ impl<K, V> ExactSizeIterator for IntoIter<K, V> {
 impl<K, V> FusedIterator for IntoIter<K, V> {}
 
 /// An iterator over the keys of a `FlatMultimap`.
+#[derive(Clone)]
 pub struct Keys<'a, K, V> {
     iter: Iter<'a, K, V>,
 }
@@ -367,6 +369,7 @@ impl<K, V> ExactSizeIterator for IntoKeys<K, V> {
 impl<K, V> FusedIterator for IntoKeys<K, V> {}
 
 /// An iterator over the values of a `FlatMultimap`.
+#[derive(Clone)]
 pub struct Values<'a, K, V> {
     iter: Iter<'a, K, V>,
 }

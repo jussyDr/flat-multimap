@@ -18,7 +18,7 @@ use std::iter::FusedIterator;
 ///
 /// assert_eq!(set.len(), 3);
 /// ```
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FlatMultiset<T, S = RandomState> {
     map: FlatMultimap<T, (), S>,
 }
@@ -153,6 +153,7 @@ impl<T, S> IntoIterator for FlatMultiset<T, S> {
 }
 
 /// An iterator over the items of a `FlatMultiset`.
+#[derive(Clone)]
 pub struct Iter<'a, T> {
     iter: Keys<'a, T, ()>,
 }
