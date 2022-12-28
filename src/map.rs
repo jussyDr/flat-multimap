@@ -247,6 +247,10 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
             (&bucket.0, &bucket.1)
         })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// A mutable iterator over the entries of a `FlatMultimap`.
@@ -264,6 +268,10 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
             (&bucket.0, &mut bucket.1)
         })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// An owning iterator over the entries of a `FlatMultimap`.
@@ -276,6 +284,10 @@ impl<K, V> Iterator for IntoIter<K, V> {
 
     fn next(&mut self) -> Option<(K, V)> {
         self.iter.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
     }
 }
 
@@ -290,6 +302,10 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     fn next(&mut self) -> Option<&'a K> {
         self.iter.next().map(|(key, _)| key)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// An owning iterator over the keys of a `FlatMultimap`.
@@ -302,6 +318,10 @@ impl<K, V> Iterator for IntoKeys<K, V> {
 
     fn next(&mut self) -> Option<K> {
         self.iter.next().map(|(key, _)| key)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
     }
 }
 
@@ -316,6 +336,10 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     fn next(&mut self) -> Option<&'a V> {
         self.iter.next().map(|(_, value)| value)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// A mutable iterator over the values of a `FlatMultimap`.
@@ -329,6 +353,10 @@ impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
     fn next(&mut self) -> Option<&'a mut V> {
         self.iter.next().map(|(_, value)| value)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 /// An owning iterator over the values of a `FlatMultimap`.
@@ -341,6 +369,10 @@ impl<K, V> Iterator for IntoValues<K, V> {
 
     fn next(&mut self) -> Option<V> {
         self.iter.next().map(|(_, value)| value)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
     }
 }
 
