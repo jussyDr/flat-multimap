@@ -2,6 +2,7 @@ use crate::map::{FlatMultimap, IntoKeys, Keys};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash};
+use std::iter::FusedIterator;
 
 /// Multiset implementation where items are stored as a flattened hash set.
 ///
@@ -168,6 +169,14 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
+impl<'a, T> ExactSizeIterator for Iter<'a, T> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, T> FusedIterator for Iter<'a, T> {}
+
 /// An owning iterator over the items of a `FlatMultiset`.
 pub struct IntoIter<T> {
     iter: IntoKeys<T, ()>,
@@ -184,3 +193,11 @@ impl<T> Iterator for IntoIter<T> {
         self.iter.size_hint()
     }
 }
+
+impl<T> ExactSizeIterator for IntoIter<T> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<T> FusedIterator for IntoIter<T> {}

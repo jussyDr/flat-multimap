@@ -2,6 +2,7 @@ use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
+use std::iter::FusedIterator;
 use std::marker::PhantomData;
 
 /// Multimap implementation where entries are stored as a flattened hash map.
@@ -253,6 +254,14 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     }
 }
 
+impl<'a, K, V> ExactSizeIterator for Iter<'a, K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, K, V> FusedIterator for Iter<'a, K, V> {}
+
 /// A mutable iterator over the entries of a `FlatMultimap`.
 pub struct IterMut<'a, K, V> {
     iter: RawIter<(K, V)>,
@@ -274,6 +283,14 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     }
 }
 
+impl<'a, K, V> ExactSizeIterator for IterMut<'a, K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, K, V> FusedIterator for IterMut<'a, K, V> {}
+
 /// An owning iterator over the entries of a `FlatMultimap`.
 pub struct IntoIter<K, V> {
     iter: RawIntoIter<(K, V)>,
@@ -290,6 +307,14 @@ impl<K, V> Iterator for IntoIter<K, V> {
         self.iter.size_hint()
     }
 }
+
+impl<K, V> ExactSizeIterator for IntoIter<K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<K, V> FusedIterator for IntoIter<K, V> {}
 
 /// An iterator over the keys of a `FlatMultimap`.
 pub struct Keys<'a, K, V> {
@@ -308,6 +333,14 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     }
 }
 
+impl<'a, K, V> ExactSizeIterator for Keys<'a, K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, K, V> FusedIterator for Keys<'a, K, V> {}
+
 /// An owning iterator over the keys of a `FlatMultimap`.
 pub struct IntoKeys<K, V> {
     iter: IntoIter<K, V>,
@@ -324,6 +357,14 @@ impl<K, V> Iterator for IntoKeys<K, V> {
         self.iter.size_hint()
     }
 }
+
+impl<K, V> ExactSizeIterator for IntoKeys<K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<K, V> FusedIterator for IntoKeys<K, V> {}
 
 /// An iterator over the values of a `FlatMultimap`.
 pub struct Values<'a, K, V> {
@@ -342,6 +383,14 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     }
 }
 
+impl<'a, K, V> ExactSizeIterator for Values<'a, K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, K, V> FusedIterator for Values<'a, K, V> {}
+
 /// A mutable iterator over the values of a `FlatMultimap`.
 pub struct ValuesMut<'a, K, V> {
     iter: IterMut<'a, K, V>,
@@ -359,6 +408,14 @@ impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
     }
 }
 
+impl<'a, K, V> ExactSizeIterator for ValuesMut<'a, K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<'a, K, V> FusedIterator for ValuesMut<'a, K, V> {}
+
 /// An owning iterator over the values of a `FlatMultimap`.
 pub struct IntoValues<K, V> {
     iter: IntoIter<K, V>,
@@ -375,6 +432,14 @@ impl<K, V> Iterator for IntoValues<K, V> {
         self.iter.size_hint()
     }
 }
+
+impl<K, V> ExactSizeIterator for IntoValues<K, V> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<K, V> FusedIterator for IntoValues<K, V> {}
 
 fn equivalent_key<Q, K, V>(k: &Q) -> impl Fn(&(K, V)) -> bool + '_
 where
