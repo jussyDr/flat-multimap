@@ -20,7 +20,7 @@ use std::marker::PhantomData;
 ///
 /// assert_eq!(map.len(), 3);
 /// ```
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct FlatMultimap<K, V, S = RandomState> {
     hash_builder: S,
     table: RawTable<(K, V)>,
@@ -287,6 +287,18 @@ impl<K, V, S> IntoIterator for FlatMultimap<K, V, S> {
     fn into_iter(self) -> IntoIter<K, V> {
         IntoIter {
             iter: self.table.into_iter(),
+        }
+    }
+}
+
+impl<K, V, S> Default for FlatMultimap<K, V, S>
+where
+    S: Default,
+{
+    fn default() -> Self {
+        FlatMultimap {
+            hash_builder: Default::default(),
+            table: RawTable::new(),
         }
     }
 }
