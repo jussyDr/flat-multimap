@@ -1,5 +1,6 @@
 # Flat Multimap
 
+[![build status](https://github.com/jussyDr/flat-multimap/workflows/Rust/badge.svg?branch=master)](https://github.com/jussyDr/flat-multimap/actions)
 [![crates.io](https://img.shields.io/crates/v/flat-multimap.svg)](https://crates.io/crates/flat-multimap)
 [![docs](https://docs.rs/flat-multimap/badge.svg)](https://docs.rs/flat-multimap)
 [![rustc](https://img.shields.io/badge/rust-1.61%2B-orange.svg)](https://img.shields.io/badge/rust-1.61%2B-orange.svg)
