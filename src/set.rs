@@ -2,6 +2,7 @@
 pub use crate::rayon::set as rayon;
 
 use crate::map::{FlatMultimap, IntoKeys, Keys};
+use hashbrown::TryReserveError;
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::fmt::{self, Debug};
@@ -101,6 +102,21 @@ where
     /// Reserves capacity for at least additional more elements to be inserted in the `FlatMultset`.
     pub fn reserve(&mut self, additional: usize) {
         self.map.reserve(additional);
+    }
+
+    /// Tries to reserve capacity for at least additional more elements to be inserted in the `FlatMultset`.
+    pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
+        self.map.try_reserve(additional)
+    }
+
+    /// Shrinks the capacity of the set as much as possible.
+    pub fn shrink_to_fit(&mut self) {
+        self.map.shrink_to_fit();
+    }
+
+    /// Shrinks the capacity of the set with a lower limit.
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        self.map.shrink_to(min_capacity);
     }
 
     /// Adds a value to the set.

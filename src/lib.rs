@@ -44,5 +44,6 @@ mod rayon;
 #[cfg(feature = "serde")]
 mod serde;
 
+pub use hashbrown::TryReserveError;
 pub use map::FlatMultimap;
 pub use set::FlatMultiset;

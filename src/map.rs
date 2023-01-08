@@ -2,6 +2,7 @@
 pub use crate::rayon::map as rayon;
 
 use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
+use hashbrown::TryReserveError;
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::fmt::{self, Debug};
@@ -165,6 +166,23 @@ where
     pub fn reserve(&mut self, additional: usize) {
         self.table
             .reserve(additional, make_hasher(&self.hash_builder));
+    }
+
+    /// Tries to reserve capacity for at least additional more elements to be inserted in the `FlatMultimap`.
+    pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
+        self.table
+            .try_reserve(additional, make_hasher(&self.hash_builder))
+    }
+
+    /// Shrinks the capacity of the map as much as possible.
+    pub fn shrink_to_fit(&mut self) {
+        self.table.shrink_to(0, make_hasher(&self.hash_builder));
+    }
+
+    /// Shrinks the capacity of the map with a lower limit.
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        self.table
+            .shrink_to(min_capacity, make_hasher(&self.hash_builder));
     }
 
     /// Inserts a key-value pair into the map.
