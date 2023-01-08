@@ -19,7 +19,7 @@ use std::iter::FusedIterator;
 ///
 /// assert_eq!(set.len(), 3);
 /// ```
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct FlatMultiset<T, S = RandomState> {
     map: FlatMultimap<T, (), S>,
 }
@@ -186,6 +186,17 @@ impl<T, S> IntoIterator for FlatMultiset<T, S> {
     fn into_iter(self) -> IntoIter<T> {
         IntoIter {
             iter: self.map.into_keys(),
+        }
+    }
+}
+
+impl<T, S> Default for FlatMultiset<T, S>
+where
+    S: Default,
+{
+    fn default() -> Self {
+        FlatMultiset {
+            map: FlatMultimap::default(),
         }
     }
 }
