@@ -316,6 +316,15 @@ where
     }
 }
 
+impl<K, V, const N: usize> From<[(K, V); N]> for FlatMultimap<K, V, RandomState>
+where
+    K: Eq + Hash,
+{
+    fn from(arr: [(K, V); N]) -> Self {
+        arr.into_iter().collect()
+    }
+}
+
 /// An iterator over the entries of a `FlatMultimap`.
 pub struct Iter<'a, K, V> {
     iter: RawIter<(K, V)>,

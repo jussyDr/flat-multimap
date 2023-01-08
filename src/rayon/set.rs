@@ -3,7 +3,7 @@ use std::hash::{BuildHasher, Hash};
 use super::{collect, map};
 use crate::FlatMultiset;
 use rayon::iter::plumbing::UnindexedConsumer;
-use rayon::iter::{IntoParallelIterator, ParallelExtend, ParallelIterator};
+use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelExtend, ParallelIterator};
 
 /// Parallel iterator over elements of a consumed set.
 pub struct IntoParIter<T> {
@@ -56,6 +56,21 @@ impl<'a, T: Sync, S> IntoParallelIterator for &'a FlatMultiset<T, S> {
         ParIter {
             inner: self.map.par_keys(),
         }
+    }
+}
+
+impl<T, S> FromParallelIterator<T> for FlatMultiset<T, S>
+where
+    T: Eq + Hash + Send,
+    S: BuildHasher + Default,
+{
+    fn from_par_iter<P>(par_iter: P) -> Self
+    where
+        P: IntoParallelIterator<Item = T>,
+    {
+        let mut set = FlatMultiset::default();
+        set.par_extend(par_iter);
+        set
     }
 }
 

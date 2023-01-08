@@ -2,7 +2,7 @@ use super::collect;
 use crate::FlatMultimap;
 use hashbrown::raw::rayon::{RawIntoParIter, RawParIter};
 use rayon::iter::plumbing::UnindexedConsumer;
-use rayon::iter::{IntoParallelIterator, ParallelExtend, ParallelIterator};
+use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelExtend, ParallelIterator};
 use std::hash::{BuildHasher, Hash};
 use std::marker::PhantomData;
 
@@ -186,6 +186,22 @@ impl<'a, K: Sync, V: Send, S> IntoParallelIterator for &'a mut FlatMultimap<K, V
             inner: unsafe { self.table.par_iter() },
             marker: PhantomData,
         }
+    }
+}
+
+impl<K, V, S> FromParallelIterator<(K, V)> for FlatMultimap<K, V, S>
+where
+    K: Eq + Hash + Send,
+    V: Send,
+    S: BuildHasher + Default,
+{
+    fn from_par_iter<P>(par_iter: P) -> Self
+    where
+        P: IntoParallelIterator<Item = (K, V)>,
+    {
+        let mut map = FlatMultimap::default();
+        map.par_extend(par_iter);
+        map
     }
 }
 

@@ -213,6 +213,15 @@ where
     }
 }
 
+impl<T, const N: usize> From<[T; N]> for FlatMultiset<T, RandomState>
+where
+    T: Eq + Hash,
+{
+    fn from(arr: [T; N]) -> Self {
+        arr.into_iter().collect()
+    }
+}
+
 /// An iterator over the items of a `FlatMultiset`.
 pub struct Iter<'a, T> {
     iter: Keys<'a, T, ()>,
