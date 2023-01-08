@@ -31,6 +31,11 @@
 //! Storing elements as a flattened hash table ***can*** have the benefit
 //! that it saves space compared to the common implementations.
 //! This ***can*** be the case when there are very few duplicates and/or the size of the elements is very small.
+//!
+//! Disadvantages of storing elements this way compared to the common implementations is that much
+//! more space is required when there are many duplicates. Furthermore, there are no efficient operations which can
+//! get all the values associated with a single key (in the case of a map), and no efficient operations to count the number
+//! of duplicates.
 
 /// Multimap implementation where entries are stored as a flattened hash map.
 pub mod map;

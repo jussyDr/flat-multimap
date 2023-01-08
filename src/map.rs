@@ -31,7 +31,18 @@ pub struct FlatMultimap<K, V, S = RandomState> {
 }
 
 impl<K, V> FlatMultimap<K, V, RandomState> {
-    /// Creates an empty `FlatMultimap` with a capacity of 0.
+    /// Creates an empty `FlatMultimap` with a capacity of 0,
+    /// so it will not allocate until it is first inserted into.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use flat_multimap::FlatMultimap;
+    ///
+    /// let mut map: FlatMultimap<&str, i32> = FlatMultimap::new();
+    ///
+    /// assert_eq!(map.capacity(), 0);
+    /// ```
     #[must_use]
     pub fn new() -> Self {
         Self::with_hasher(RandomState::default())
@@ -228,7 +239,7 @@ where
     /// map.insert(1, 2);
     ///
     /// assert!(map.remove(&1).is_some()); // Could be either Some(1) or Some(2).
-    /// assert!(map.remove(&1).is_some()); // Could be either Some(1) or Some(2).
+    /// assert!(map.remove(&1).is_some()); // Could be either Some(1) or Some(2), depending on the previous remove.
     /// assert!(map.remove(&1).is_none());
     /// ```
     pub fn remove<Q>(&mut self, key: &Q) -> Option<V>

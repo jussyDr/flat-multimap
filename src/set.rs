@@ -29,7 +29,18 @@ pub struct FlatMultiset<T, S = RandomState> {
 }
 
 impl<T> FlatMultiset<T, RandomState> {
-    /// Creates an empty `FlatMultiset` with a capacity of 0.
+    /// Creates an empty `FlatMultiset` with a capacity of 0,
+    /// so it will not allocate until it is first inserted into.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use flat_multimap::FlatMultiset;
+    ///
+    /// let mut set: FlatMultiset<i32> = FlatMultiset::new();
+    ///
+    /// assert_eq!(set.capacity(), 0);
+    /// ```
     #[must_use]
     pub fn new() -> Self {
         Self {
