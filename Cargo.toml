@@ -11,4 +11,11 @@ categories = ["data-structures"]
 
 [dependencies]
 hashbrown = { version = "0.13", features = ["raw"] }
+rayon = { version = "1.6", optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
+
+[features]
+rayon = ["dep:rayon", "hashbrown/rayon"]
+
+[package.metadata.docs.rs]
+features = ["rayon", "serde"]

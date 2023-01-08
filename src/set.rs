@@ -1,3 +1,6 @@
+#[cfg(feature = "rayon")]
+pub use crate::rayon::set as rayon;
+
 use crate::map::{FlatMultimap, IntoKeys, Keys};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
@@ -21,7 +24,7 @@ use std::iter::FusedIterator;
 /// ```
 #[derive(Clone)]
 pub struct FlatMultiset<T, S = RandomState> {
-    map: FlatMultimap<T, (), S>,
+    pub(crate) map: FlatMultimap<T, (), S>,
 }
 
 impl<T> FlatMultiset<T, RandomState> {

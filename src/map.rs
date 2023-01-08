@@ -1,3 +1,6 @@
+#[cfg(feature = "rayon")]
+pub use crate::rayon::map as rayon;
+
 use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
@@ -23,7 +26,7 @@ use std::marker::PhantomData;
 #[derive(Clone)]
 pub struct FlatMultimap<K, V, S = RandomState> {
     hash_builder: S,
-    table: RawTable<(K, V)>,
+    pub(crate) table: RawTable<(K, V)>,
 }
 
 impl<K, V> FlatMultimap<K, V, RandomState> {

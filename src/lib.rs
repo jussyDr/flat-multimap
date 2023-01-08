@@ -38,6 +38,9 @@ pub mod map;
 /// Multiset implementation where items are stored as a flattened hash set.
 pub mod set;
 
+#[cfg(feature = "rayon")]
+mod rayon;
+
 #[cfg(feature = "serde")]
 mod serde;
 
