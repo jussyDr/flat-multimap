@@ -21,6 +21,22 @@ impl<T: Send> ParallelIterator for IntoParIter<T> {
     }
 }
 
+/// Parallel draining iterator over entries of a set.
+pub struct ParDrain<'a, T> {
+    inner: map::ParDrain<'a, T, ()>,
+}
+
+impl<T: Send> ParallelIterator for ParDrain<'_, T> {
+    type Item = T;
+
+    fn drive_unindexed<C>(self, consumer: C) -> C::Result
+    where
+        C: UnindexedConsumer<Self::Item>,
+    {
+        self.inner.map(|(k, _)| k).drive_unindexed(consumer)
+    }
+}
+
 /// Parallel iterator over shared references to elements in a set.
 pub struct ParIter<'a, T> {
     inner: map::ParKeys<'a, T, ()>,
@@ -34,6 +50,18 @@ impl<'a, T: Sync> ParallelIterator for ParIter<'a, T> {
         C: UnindexedConsumer<Self::Item>,
     {
         self.inner.drive_unindexed(consumer)
+    }
+}
+
+impl<T, S> FlatMultiset<T, S>
+where
+    T: Eq + Hash + Send,
+{
+    /// Consumes (potentially in parallel) all values in an arbitrary order.
+    pub fn par_drain(&mut self) -> ParDrain<'_, T> {
+        ParDrain {
+            inner: self.map.par_drain(),
+        }
     }
 }
 

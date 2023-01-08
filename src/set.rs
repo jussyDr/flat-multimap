@@ -1,7 +1,7 @@
 #[cfg(feature = "rayon")]
 pub use crate::rayon::set as rayon;
 
-use crate::map::{FlatMultimap, IntoKeys, Keys};
+use crate::map::{self, FlatMultimap, IntoKeys, Keys};
 use hashbrown::TryReserveError;
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
@@ -79,6 +79,21 @@ impl<T, S> FlatMultiset<T, S> {
     /// Returns `true` if the set contains no elements.
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
+    }
+
+    /// Clears the set, returning all elements as an iterator.
+    pub fn drain(&mut self) -> Drain<'_, T> {
+        Drain {
+            iter: self.map.drain(),
+        }
+    }
+
+    /// Retains only the elements specified by the predicate.
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&T) -> bool,
+    {
+        self.map.retain(|k, _| f(k));
     }
 
     /// Clears the set, removing all values.
@@ -235,6 +250,38 @@ where
 {
     fn from(arr: [T; N]) -> Self {
         arr.into_iter().collect()
+    }
+}
+
+/// A draining iterator over the items of a `FlatMultiset`.
+pub struct Drain<'a, T> {
+    iter: map::Drain<'a, T, ()>,
+}
+
+impl<T> Iterator for Drain<'_, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        self.iter.next().map(|(v, _)| v)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<T> ExactSizeIterator for Drain<'_, T> {
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
+}
+
+impl<T> FusedIterator for Drain<'_, T> {}
+
+impl<T: Debug> Debug for Drain<'_, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let entries_iter = self.iter.iter().map(|(k, _)| k);
+        f.debug_list().entries(entries_iter).finish()
     }
 }
 

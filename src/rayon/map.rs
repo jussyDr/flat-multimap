@@ -1,10 +1,12 @@
 use super::collect;
 use crate::FlatMultimap;
-use hashbrown::raw::rayon::{RawIntoParIter, RawParIter};
+use hashbrown::raw::rayon::{RawIntoParIter, RawParDrain, RawParIter};
 use rayon::iter::plumbing::UnindexedConsumer;
 use rayon::iter::{FromParallelIterator, IntoParallelIterator, ParallelExtend, ParallelIterator};
 use std::hash::{BuildHasher, Hash};
 use std::marker::PhantomData;
+
+// TODO: Debug impls
 
 /// Parallel iterator over shared references to entries in a map.
 #[derive(Clone)]
@@ -126,6 +128,22 @@ impl<K: Send, V: Send> ParallelIterator for IntoParIter<K, V> {
     }
 }
 
+/// Parallel draining iterator over entries of a map.
+pub struct ParDrain<'a, K, V> {
+    inner: RawParDrain<'a, (K, V)>,
+}
+
+impl<K: Send, V: Send> ParallelIterator for ParDrain<'_, K, V> {
+    type Item = (K, V);
+
+    fn drive_unindexed<C>(self, consumer: C) -> C::Result
+    where
+        C: UnindexedConsumer<Self::Item>,
+    {
+        self.inner.drive_unindexed(consumer)
+    }
+}
+
 impl<K: Sync, V: Sync, S> FlatMultimap<K, V, S> {
     /// Visits (potentially in parallel) immutably borrowed keys in an arbitrary order.
     pub fn par_keys(&self) -> ParKeys<'_, K, V> {
@@ -150,6 +168,13 @@ impl<K: Send, V: Send, S> FlatMultimap<K, V, S> {
         ParValuesMut {
             inner: unsafe { self.table.par_iter() },
             marker: PhantomData,
+        }
+    }
+
+    /// Consumes (potentially in parallel) all values in an arbitrary order.
+    pub fn par_drain(&mut self) -> ParDrain<'_, K, V> {
+        ParDrain {
+            inner: self.table.par_drain(),
         }
     }
 }

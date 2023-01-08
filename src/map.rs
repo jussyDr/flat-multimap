@@ -1,7 +1,7 @@
 #[cfg(feature = "rayon")]
 pub use crate::rayon::map as rayon;
 
-use hashbrown::raw::{RawIntoIter, RawIter, RawTable};
+use hashbrown::raw::{RawDrain, RawIntoIter, RawIter, RawTable};
 use hashbrown::TryReserveError;
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
@@ -79,6 +79,29 @@ impl<K, V, S> FlatMultimap<K, V, S> {
     /// Returns `true` if the map contains no elements.
     pub fn is_empty(&self) -> bool {
         self.table.is_empty()
+    }
+
+    /// Clears the map, returning all key-value pairs as an iterator.
+    pub fn drain(&mut self) -> Drain<'_, K, V> {
+        Drain {
+            inner: self.table.drain(),
+        }
+    }
+
+    /// Retains only the elements specified by the predicate.
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&K, &mut V) -> bool,
+    {
+        unsafe {
+            for item in self.table.iter() {
+                let &mut (ref key, ref mut value) = item.as_mut();
+
+                if !f(key, value) {
+                    self.table.erase(item);
+                }
+            }
+        }
     }
 
     /// Clears the map, removing all key-value pairs. Keeps the allocated memory for reuse.
@@ -340,6 +363,50 @@ where
 {
     fn from(arr: [(K, V); N]) -> Self {
         arr.into_iter().collect()
+    }
+}
+
+/// A draining iterator over the entries of a `FlatMultimap`.
+pub struct Drain<'a, K, V> {
+    inner: RawDrain<'a, (K, V)>,
+}
+
+impl<K, V> Drain<'_, K, V> {
+    pub(crate) fn iter(&self) -> Iter<'_, K, V> {
+        Iter {
+            iter: self.inner.iter(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, K, V> Iterator for Drain<'a, K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<(K, V)> {
+        self.inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<K, V> ExactSizeIterator for Drain<'_, K, V> {
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+}
+
+impl<K, V> FusedIterator for Drain<'_, K, V> {}
+
+impl<K, V> Debug for Drain<'_, K, V>
+where
+    K: Debug,
+    V: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
     }
 }
 
